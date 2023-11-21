@@ -63,7 +63,7 @@ model, filter = load_model(
 )
 
 def sample(
-    image: str,
+    input_path: str,
     num_frames: Optional[int] = 25,
     num_steps: Optional[int] = 30,
     version: str = "svd_xt",

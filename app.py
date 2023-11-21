@@ -43,7 +43,9 @@ def run_sampling(
 ):
     output_folder = str(uuid.uuid4())
     print(output_folder)
-    sample(input_path, version, output_folder, decoding_t)
+    print(version)
+    print(input_path)
+    sample(input_path, version=version, output_folder=output_folder, decoding_t=decoding_t)
     return f"{output_folder}/000000.mp4"
 
 def get_unique_embedder_keys_from_conditioner(conditioner):

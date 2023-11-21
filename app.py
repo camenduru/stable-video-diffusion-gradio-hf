@@ -63,7 +63,7 @@ model, filter = load_model(
 )
 
 def sample(
-    image: Image.Image,
+    image: str,
     num_frames: Optional[int] = 25,
     num_steps: Optional[int] = 30,
     version: str = "svd_xt",
@@ -255,36 +255,36 @@ def get_batch(keys, value_dict, N, T, device):
 
 import gradio as gr
 import uuid
-def resize_image(image, output_size=(1024, 576)):
-
-    # Calculate aspect ratios
-    target_aspect = output_size[0] / output_size[1]  # Aspect ratio of the desired size
-    image_aspect = image.width / image.height  # Aspect ratio of the original image
-
-    # Resize then crop if the original image is larger
-    if image_aspect > target_aspect:
-        # Resize the image to match the target height, maintaining aspect ratio
-        new_height = output_size[1]
-        new_width = int(new_height * image_aspect)
-        resized_image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
-        # Calculate coordinates for cropping
-        left = (new_width - output_size[0]) / 2
-        top = 0
-        right = (new_width + output_size[0]) / 2
-        bottom = output_size[1]
-    else:
-        # Resize the image to match the target width, maintaining aspect ratio
-        new_width = output_size[0]
-        new_height = int(new_width / image_aspect)
-        resized_image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
-        # Calculate coordinates for cropping
-        left = 0
-        top = (new_height - output_size[1]) / 2
-        right = output_size[0]
-        bottom = (new_height + output_size[1]) / 2
-
-    # Crop the image
-    cropped_image = resized_image.crop((left, top, right, bottom))
+def resize_image(image_path, output_size=(1024, 576)):
+    with Image.open(image_path) as image:
+        # Calculate aspect ratios
+        target_aspect = output_size[0] / output_size[1]  # Aspect ratio of the desired size
+        image_aspect = image.width / image.height  # Aspect ratio of the original image
+    
+        # Resize then crop if the original image is larger
+        if image_aspect > target_aspect:
+            # Resize the image to match the target height, maintaining aspect ratio
+            new_height = output_size[1]
+            new_width = int(new_height * image_aspect)
+            resized_image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+            # Calculate coordinates for cropping
+            left = (new_width - output_size[0]) / 2
+            top = 0
+            right = (new_width + output_size[0]) / 2
+            bottom = output_size[1]
+        else:
+            # Resize the image to match the target width, maintaining aspect ratio
+            new_width = output_size[0]
+            new_height = int(new_width / image_aspect)
+            resized_image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+            # Calculate coordinates for cropping
+            left = 0
+            top = (new_height - output_size[1]) / 2
+            right = output_size[0]
+            bottom = (new_height + output_size[1]) / 2
+    
+        # Crop the image
+        cropped_image = resized_image.crop((left, top, right, bottom))
 
     return cropped_image
 

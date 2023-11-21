@@ -28,7 +28,7 @@ num_steps = 30
 model_config = "scripts/sampling/configs/svd_xt.yaml"
 device = "cuda"
 
-#hf_hub_download(repo_id="stabilityai/stable-video-diffusion-img2vid-xt", filename="svd_xt.safetensors", local_dir="checkpoints", token=os.getenv("HF_TOKEN"))
+hf_hub_download(repo_id="stabilityai/stable-video-diffusion-img2vid-xt", filename="svd_xt.safetensors", local_dir="checkpoints", token=os.getenv("HF_TOKEN"))
 
 def run_sampling(
     input_path: str,

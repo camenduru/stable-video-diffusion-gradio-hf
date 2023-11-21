@@ -241,7 +241,7 @@ def resize_image(image, output_size=(1024, 576)):
         # Resize the image to match the target height, maintaining aspect ratio
         new_height = output_size[1]
         new_width = int(new_height * image_aspect)
-        resized_image = image.resize((new_width, new_height), Image.ANTIALIAS)
+        resized_image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
         # Calculate coordinates for cropping
         left = (new_width - output_size[0]) / 2
         top = 0

@@ -18,8 +18,9 @@ from scripts.util.detection.nsfw_and_watermark_dectection import \
 from sgm.inference.helpers import embed_watermark
 from sgm.util import default, instantiate_from_config
 
+
 def sample(
-    input_path: str = "assets/doggo.png",  # Can either be image file or folder with image files
+    input_path: str = "assets/test_image.png",  # Can either be image file or folder with image files
     num_frames: Optional[int] = None,
     num_steps: Optional[int] = None,
     version: str = "svd",

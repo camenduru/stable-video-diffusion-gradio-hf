@@ -26,6 +26,10 @@ device = "cuda"
 
 hf_hub_download(repo_id="stabilityai/stable-video-diffusion-img2vid-xt", filename="svd_xt.safetensors", local_dir="checkpoints", token=os.getenv("HF_TOKEN"))
 
+css = '''
+.gradio-container{max-width:900px}
+'''
+
 def load_model(
     config: str,
     device: str,
@@ -164,7 +168,7 @@ def sample(
                 video_path = os.path.join(output_folder, f"{base_count:06d}.mp4")
                 writer = cv2.VideoWriter(
                     video_path,
-                    cv2.VideoWriter_fourcc(*'avc1'),
+                    cv2.VideoWriter_fourcc(*'mp4v'),
                     fps_id + 1,
                     (samples.shape[-1], samples.shape[-2]),
                 )
@@ -263,18 +267,18 @@ def resize_image(image, output_size=(1024, 576)):
 
     return cropped_image
 
-with gr.Blocks() as demo:
+with gr.Blocks(css=css) as demo:
   gr.Markdown('''# Stable Video Diffusion - Image2Video - XT
-Generate 25 frames of video from a single image using SDV-XT. 
+Generate 25 frames of video from a single image with SDV-XT. [Join the waitlist](https://stability.ai/contact) for the text-to-video web experience
   ''')
   with gr.Column():
     image = gr.Image(label="Upload your image (it will be center cropped to 1024x576)", type="pil")
     generate_btn = gr.Button("Generate")
-    with gr.Accordion("Advanced options", open=False):
-      cond_aug = gr.Slider(label="Conditioning augmentation", value=0.02, minimum=0.0)
-      seed = gr.Slider(label="Seed", value=42, minimum=0, maximum=int(1e9), step=1)
+    #with gr.Accordion("Advanced options", open=False):
+    #  cond_aug = gr.Slider(label="Conditioning augmentation", value=0.02, minimum=0.0)
+    #  seed = gr.Slider(label="Seed", value=42, minimum=0, maximum=int(1e9), step=1)
       #decoding_t = gr.Slider(label="Decode frames at a time", value=6, minimum=1, maximum=14, interactive=False)
-      saving_fps = gr.Slider(label="Saving FPS", value=6, minimum=6, maximum=48, step=6)
+    #  saving_fps = gr.Slider(label="Saving FPS", value=6, minimum=6, maximum=48, step=6)
   with gr.Column():
     video = gr.Video()
   image.upload(fn=resize_image, inputs=image, outputs=image)

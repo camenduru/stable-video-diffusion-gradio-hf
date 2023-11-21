@@ -30,7 +30,7 @@ device = "cuda"
 
 #hf_hub_download(repo_id="stabilityai/stable-video-diffusion-img2vid-xt", filename="svd_xt.safetensors", local_dir="checkpoints", token=os.getenv("HF_TOKEN"))
 
-def sample(
+def run_sampling(
     input_path: str,
     num_frames: Optional[int] = 25,
     num_steps: Optional[int] = 30,
@@ -142,6 +142,6 @@ Generate 25 frames of video from a single image with SDV-XT. [Join the waitlist]
   with gr.Column():
     video = gr.Video()
   image.upload(fn=resize_image, inputs=image, outputs=image)
-  generate_btn.click(fn=sample, inputs=[image], outputs=video, api_name="video")
+  generate_btn.click(fn=run_sampling, inputs=[image], outputs=video, api_name="video")
 
 demo.launch()

@@ -30,10 +30,6 @@ device = "cuda"
 
 #hf_hub_download(repo_id="stabilityai/stable-video-diffusion-img2vid-xt", filename="svd_xt.safetensors", local_dir="checkpoints", token=os.getenv("HF_TOKEN"))
 
-css = '''
-.gradio-container{max-width:850px !important}
-'''
-
 def sample(
     input_path: str,
     num_frames: Optional[int] = 25,
@@ -46,6 +42,7 @@ def sample(
     decoding_t: int = 7,  # Number of frames decoded at a time! This eats most VRAM. Reduce if necessary.
 ):
     output_folder = str(uuid.uuid4())
+    print(output_folder)
     sample(input_path, version, output_folder, decoding_t)
     return f"{output_folder}/000000.mp4"
 
@@ -125,6 +122,10 @@ def resize_image(image_path, output_size=(1024, 576)):
         cropped_image = resized_image.crop((left, top, right, bottom))
 
     return cropped_image
+
+css = '''
+.gradio-container{max-width:850px !important}
+'''
 
 with gr.Blocks(css=css) as demo:
   gr.Markdown('''# Stable Video Diffusion - Image2Video - XT

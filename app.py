@@ -4,7 +4,6 @@ from glob import glob
 from pathlib import Path
 from typing import Optional
 
-
 import cv2
 import numpy as np
 import torch
@@ -18,6 +17,9 @@ from scripts.util.detection.nsfw_and_watermark_dectection import \
 from sgm.inference.helpers import embed_watermark
 from sgm.util import default, instantiate_from_config
 from huggingface_hub import hf_hub_download
+
+import gradio as gr
+import uuid
 
 from simple_video_sample import sample
 
@@ -91,9 +93,6 @@ def get_batch(keys, value_dict, N, T, device):
             batch_uc[key] = torch.clone(batch[key])
     return batch, batch_uc
 
-
-import gradio as gr
-import uuid
 def resize_image(image_path, output_size=(1024, 576)):
     with Image.open(image_path) as image:
         # Calculate aspect ratios

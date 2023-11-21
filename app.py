@@ -27,7 +27,7 @@ device = "cuda"
 hf_hub_download(repo_id="stabilityai/stable-video-diffusion-img2vid-xt", filename="svd_xt.safetensors", local_dir="checkpoints", token=os.getenv("HF_TOKEN"))
 
 css = '''
-.gradio-container{max-width:900px}
+.gradio-container{max-width:850px !important}
 '''
 
 def load_model(

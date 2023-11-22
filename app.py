@@ -300,7 +300,7 @@ def resize_image(image_path, output_size=(1024, 576)):
     return cropped_image
 
 with gr.Blocks() as demo:
-  gr.Markdown('''# Unofficial demo for Stable Video Diffusion - Img2Vid - XT ([model](https://huggingface.co/stabilityai/stable-video-diffusion-img2vid-xt), [paper](https://stability.ai/research/stable-video-diffusion-scaling-latent-video-diffusion-models-to-large-datasets))
+  gr.Markdown('''# Community demo for Stable Video Diffusion - Img2Vid - XT ([model](https://huggingface.co/stabilityai/stable-video-diffusion-img2vid-xt), [paper](https://stability.ai/research/stable-video-diffusion-scaling-latent-video-diffusion-models-to-large-datasets))
 #### Research release ([_non-commercial_](https://huggingface.co/stabilityai/stable-video-diffusion-img2vid-xt/blob/main/LICENSE)): generate `25 frames` of video from a single image at `6 fps`. Each generation takes ~60s on the A100. [Join the waitlist](https://stability.ai/contact) for Stability's upcoming web experience.
   ''')
   with gr.Row():

@@ -294,7 +294,7 @@ def resize_image(image_path, output_size=(1024, 576)):
 
 with gr.Blocks() as demo:
   gr.Markdown('''# Stable Video Diffusion - Image2Video - XT
-Generate 25 frames of video from a single image using SDV-XT. 
+Generate 25 frames of video from a single image at 6 fps. Each generation takes ~60s on the A100. [Join the waitlist](https://stability.ai/contact) for a native web experience for video. 
   ''')
   with gr.Column():
     with gr.Row():

@@ -20,6 +20,7 @@ from sgm.util import default, instantiate_from_config
 
 import gradio as gr
 import uuid
+import random
 from huggingface_hub import hf_hub_download
 
 hf_hub_download(repo_id="stabilityai/stable-video-diffusion-img2vid-xt", filename="svd_xt.safetensors", local_dir="checkpoints") 
@@ -67,11 +68,12 @@ model, filter = load_model(
 
 def sample(
     input_path: str = "assets/test_image.png",  # Can either be image file or folder with image files
+    seed: Optional[int] = None,
+    randomize_seed: bool = True,
     version: str = "svd_xt",
     fps_id: int = 6,
     motion_bucket_id: int = 127,
     cond_aug: float = 0.02,
-    seed: int = 23,
     decoding_t: int = 7,  # Number of frames decoded at a time! This eats most VRAM. Reduce if necessary.
     device: str = "cuda",
     output_folder: str = "outputs",
@@ -81,6 +83,10 @@ def sample(
     Simple script to generate a single sample conditioned on an image `input_path` or multiple images, one for each
     image file in folder `input_path`. If you run out of VRAM, try decreasing `decoding_t`.
     """
+    if(randomize_seed):
+        max_64_bit_int = 2**63 - 1
+        seed = random.randint(0, max_64_bit_int)
+        
     torch.manual_seed(seed)
     
     path = Path(input_path)
@@ -213,7 +219,7 @@ def sample(
                     writer.write(frame)
                 writer.release()
         
-        return video_path
+        return video_path, seed
 
 def get_unique_embedder_keys_from_conditioner(conditioner):
     return list(set([x.input_key for x in conditioner.embedders]))
@@ -296,13 +302,18 @@ with gr.Blocks() as demo:
   gr.Markdown('''# Stable Video Diffusion - Image2Video - XT
 Generate 25 frames of video from a single image at 6 fps. Each generation takes ~60s on the A100. [Join the waitlist](https://stability.ai/contact) for a native web experience for video. 
   ''')
-  with gr.Column():
-    with gr.Row():
+  with gr.Row():
+    with gr.Column():
         image = gr.Image(label="Upload your image (it will be center cropped to 1024x576)", type="filepath")
-        video = gr.Video()
-    generate_btn = gr.Button("Generate")
+        generate_btn = gr.Button("Generate")
+    video = gr.Video()
+  with gr.Accordion(open=False):
+      seed = gr.Slider(label="Seed", value=42, randomize=True, minimum=0, maximum=max_64_bit_int)
+      randomize_seed = gr.Checkbox("Randomize seed")
+      
+  
   image.upload(fn=resize_image, inputs=image, outputs=image, queue=False)
-  generate_btn.click(fn=sample, inputs=image, outputs=video, api_name="video")
-
+  generate_btn.click(fn=sample, inputs=[image, seed, randomize_seed], outputs=[video, seed], api_name="video")
+  
 if __name__ == "__main__":
     demo.launch(share=True)

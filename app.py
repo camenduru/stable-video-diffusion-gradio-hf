@@ -21,7 +21,7 @@ from huggingface_hub import hf_hub_download
 import gradio as gr
 import uuid
 
-#from simple_video_sample import sample
+from simple_video_sample import sample
 
 num_frames = 25
 num_steps = 30
@@ -45,8 +45,7 @@ def run_sampling(
     print(output_folder)
     print(version)
     print(input_path)
-    os.system(f"python simple_video_sample.py --input_path {input_path} --version svd_xt --output_folder {output_folder} --decoding_t 7")
-    #sample(input_path, version=version, output_folder=output_folder, decoding_t=decoding_t)
+    sample(input_path, version=version, output_folder=output_folder, decoding_t=decoding_t)
     return f"{output_folder}/000000.mp4"
 
 def get_unique_embedder_keys_from_conditioner(conditioner):

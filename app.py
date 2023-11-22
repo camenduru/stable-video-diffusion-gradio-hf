@@ -45,7 +45,7 @@ def run_sampling(
     print(output_folder)
     print(version)
     print(input_path)
-    os.subprocess(f"python simple_video_sample.py --input_path {input_path} --version svd_xt --output_folder {output_folder} --decoding_t 7")
+    os.subprocess.run(f"python simple_video_sample.py --input_path {input_path} --version svd_xt --output_folder {output_folder} --decoding_t 7")
     #sample(input_path, version=version, output_folder=output_folder, decoding_t=decoding_t)
     return f"{output_folder}/000000.mp4"
 

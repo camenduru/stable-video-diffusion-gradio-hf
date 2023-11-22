@@ -310,7 +310,7 @@ with gr.Blocks() as demo:
     video = gr.Video()
   with gr.Accordion("Advanced options", open=False):
       seed = gr.Slider(label="Seed", value=42, randomize=True, minimum=0, maximum=max_64_bit_int, step=1)
-      randomize_seed = gr.Checkbox("Randomize seed")
+      randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
       
   image.upload(fn=resize_image, inputs=image, outputs=image, queue=False)
   generate_btn.click(fn=sample, inputs=[image, seed, randomize_seed], outputs=[video, seed], api_name="video")

@@ -297,10 +297,10 @@ with gr.Blocks() as demo:
 Generate 25 frames of video from a single image using SDV-XT. 
   ''')
   with gr.Column():
-    image = gr.Image(label="Upload your image (it will be center cropped to 1024x576)", type="filepath")
+    with gr.Row():
+        image = gr.Image(label="Upload your image (it will be center cropped to 1024x576)", type="filepath")
+        video = gr.Video()
     generate_btn = gr.Button("Generate")
-  with gr.Column():
-    video = gr.Video()
   image.upload(fn=resize_image, inputs=image, outputs=image, queue=False)
   generate_btn.click(fn=sample, inputs=image, outputs=video, api_name="video")
 

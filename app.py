@@ -18,6 +18,8 @@ from scripts.util.detection.nsfw_and_watermark_dectection import \
 from sgm.inference.helpers import embed_watermark
 from sgm.util import default, instantiate_from_config
 
+import gradio as gr
+import uuid
 from huggingface_hub import hf_hub_download
 
 hf_hub_download(repo_id="stabilityai/stable-video-diffusion-img2vid-xt", filename="svd_xt.safetensors", local_dir="checkpoints") 
@@ -73,6 +75,7 @@ def sample(
     decoding_t: int = 7,  # Number of frames decoded at a time! This eats most VRAM. Reduce if necessary.
     device: str = "cuda",
     output_folder: str = "outputs",
+    progress=gr.Progress(track_tqdm=True)
 ):
     """
     Simple script to generate a single sample conditioned on an image `input_path` or multiple images, one for each
@@ -256,8 +259,6 @@ def get_batch(keys, value_dict, N, T, device):
             batch_uc[key] = torch.clone(batch[key])
     return batch, batch_uc
 
-import gradio as gr
-import uuid
 def resize_image(image_path, output_size=(1024, 576)):
     image = Image.open(image_path)
     # Calculate aspect ratios

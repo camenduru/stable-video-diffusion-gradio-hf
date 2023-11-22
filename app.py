@@ -316,4 +316,5 @@ with gr.Blocks() as demo:
   generate_btn.click(fn=sample, inputs=[image, seed, randomize_seed], outputs=[video, seed], api_name="video")
   
 if __name__ == "__main__":
+    demo.queue(max_size=20)
     demo.launch(share=True)

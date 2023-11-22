@@ -29,7 +29,7 @@ class VideoResBlock(ResnetBlock):
         super().__init__(out_channels=out_channels, dropout=dropout, *args, **kwargs)
         if video_kernel_size is None:
             video_kernel_size = [3, 1, 1]
-        self.time_mix_blocks = ResBlock(
+        self.time_stack = ResBlock(
             channels=out_channels,
             emb_channels=0,
             dropout=dropout,
@@ -74,7 +74,7 @@ class VideoResBlock(ResnetBlock):
 
             x = rearrange(x, "(b t) c h w -> b c t h w", t=timesteps)
 
-            x = self.time_mix_blocks(x, temb)
+            x = self.time_stack(x, temb)
 
             alpha = self.get_alpha(bs=b // timesteps)
             x = alpha * x + (1.0 - alpha) * x_mix
@@ -83,7 +83,7 @@ class VideoResBlock(ResnetBlock):
         return x
 
 
-class PostHocConv2WithTime(torch.nn.Conv2d):
+class AE3DConv(torch.nn.Conv2d):
     def __init__(self, in_channels, out_channels, video_kernel_size=3, *args, **kwargs):
         super().__init__(in_channels, out_channels, *args, **kwargs)
         if isinstance(video_kernel_size, Iterable):
@@ -333,9 +333,7 @@ class VideoDecoder(Decoder):
 
     def _make_conv(self) -> Callable:
         if self.time_mode != "attn-only":
-            return partialclass(
-                PostHocConv2WithTime, video_kernel_size=self.video_kernel_size
-            )
+            return partialclass(AE3DConv, video_kernel_size=self.video_kernel_size)
         else:
             return Conv2DWrapper
 

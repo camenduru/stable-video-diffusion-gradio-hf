@@ -191,7 +191,7 @@ class SpatialVideoTransformer(SpatialTransformer):
         if use_spatial_context:
             time_context_dim = context_dim
 
-        self.time_mix_blocks = nn.ModuleList(
+        self.time_stack = nn.ModuleList(
             [
                 VideoTransformerBlock(
                     inner_dim,
@@ -211,13 +211,13 @@ class SpatialVideoTransformer(SpatialTransformer):
             ]
         )
 
-        assert len(self.time_mix_blocks) == len(self.transformer_blocks)
+        assert len(self.time_stack) == len(self.transformer_blocks)
 
         self.use_spatial_context = use_spatial_context
         self.in_channels = in_channels
 
         time_embed_dim = self.in_channels * 4
-        self.time_mix_time_embed = nn.Sequential(
+        self.time_pos_embed = nn.Sequential(
             linear(self.in_channels, time_embed_dim),
             nn.SiLU(),
             linear(time_embed_dim, self.in_channels),
@@ -272,11 +272,11 @@ class SpatialVideoTransformer(SpatialTransformer):
             repeat_only=False,
             max_period=self.max_time_embed_period,
         )
-        emb = self.time_mix_time_embed(t_emb)
+        emb = self.time_pos_embed(t_emb)
         emb = emb[:, None, :]
 
         for it_, (block, mix_block) in enumerate(
-            zip(self.transformer_blocks, self.time_mix_blocks)
+            zip(self.transformer_blocks, self.time_stack)
         ):
             x = block(
                 x,

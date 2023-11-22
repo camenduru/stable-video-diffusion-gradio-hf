@@ -10,14 +10,9 @@ from einops import rearrange
 from torch.utils.checkpoint import checkpoint
 
 from ...modules.attention import SpatialTransformer
-from ...modules.diffusionmodules.util import (
-    avg_pool_nd,
-    conv_nd,
-    linear,
-    normalization,
-    timestep_embedding,
-    zero_module,
-)
+from ...modules.diffusionmodules.util import (avg_pool_nd, conv_nd, linear,
+                                              normalization,
+                                              timestep_embedding, zero_module)
 from ...modules.video_attention import SpatialVideoTransformer
 from ...util import exists
 

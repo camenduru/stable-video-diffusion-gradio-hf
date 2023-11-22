@@ -16,7 +16,7 @@ class VideoResBlock(ResBlock):
         emb_channels: int,
         dropout: float,
         video_kernel_size: Union[int, List[int]] = 3,
-        merge_strategy: bool = "fixed",
+        merge_strategy: str = "fixed",
         merge_factor: float = 0.5,
         out_channels: Optional[int] = None,
         use_conv: bool = False,
@@ -39,7 +39,7 @@ class VideoResBlock(ResBlock):
             down=down,
         )
 
-        self.time_mix_blocks = ResBlock(
+        self.time_stack = ResBlock(
             default(out_channels, channels),
             emb_channels,
             dropout=dropout,
@@ -71,7 +71,7 @@ class VideoResBlock(ResBlock):
         x_mix = rearrange(x, "(b t) c h w -> b c t h w", t=num_video_frames)
         x = rearrange(x, "(b t) c h w -> b c t h w", t=num_video_frames)
 
-        x = self.time_mix_blocks(
+        x = self.time_stack(
             x, rearrange(emb, "(b t) ... -> b t ...", t=num_video_frames)
         )
         x = self.time_mixer(

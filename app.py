@@ -304,14 +304,13 @@ Generate 25 frames of video from a single image at 6 fps. Each generation takes 
   ''')
   with gr.Row():
     with gr.Column():
-        image = gr.Image(label="Upload your image (it will be center cropped to 1024x576)", type="filepath")
+        image = gr.Image(label="Upload your image", type="filepath")
         generate_btn = gr.Button("Generate")
     video = gr.Video()
   with gr.Accordion(open=False):
       seed = gr.Slider(label="Seed", value=42, randomize=True, minimum=0, maximum=max_64_bit_int)
       randomize_seed = gr.Checkbox("Randomize seed")
       
-  
   image.upload(fn=resize_image, inputs=image, outputs=image, queue=False)
   generate_btn.click(fn=sample, inputs=[image, seed, randomize_seed], outputs=[video, seed], api_name="video")
   

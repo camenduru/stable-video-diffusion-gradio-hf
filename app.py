@@ -27,6 +27,8 @@ hf_hub_download(repo_id="stabilityai/stable-video-diffusion-img2vid-xt", filenam
 
 version = "svd_xt"
 device = "cuda"
+max_64_bit_int = 2**63 - 1
+
 def load_model(
     config: str,
     device: str,
@@ -84,7 +86,6 @@ def sample(
     image file in folder `input_path`. If you run out of VRAM, try decreasing `decoding_t`.
     """
     if(randomize_seed):
-        max_64_bit_int = 2**63 - 1
         seed = random.randint(0, max_64_bit_int)
         
     torch.manual_seed(seed)

@@ -18,6 +18,8 @@ from scripts.util.detection.nsfw_and_watermark_dectection import \
 from sgm.inference.helpers import embed_watermark
 from sgm.util import default, instantiate_from_config
 
+from huggingface_hub import hf_hub_download
+
 hf_hub_download(repo_id="stabilityai/stable-video-diffusion-img2vid-xt", filename="svd_xt.safetensors", local_dir="checkpoints") 
 
 version = "svd_xt"

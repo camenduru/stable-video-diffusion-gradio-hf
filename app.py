@@ -72,9 +72,9 @@ def sample(
     input_path: str = "assets/test_image.png",  # Can either be image file or folder with image files
     seed: Optional[int] = None,
     randomize_seed: bool = True,
-    version: str = "svd_xt",
-    fps_id: int = 6,
     motion_bucket_id: int = 127,
+    fps_id: int = 6,
+    version: str = "svd_xt",
     cond_aug: float = 0.02,
     decoding_t: int = 7,  # Number of frames decoded at a time! This eats most VRAM. Reduce if necessary.
     device: str = "cuda",
@@ -300,8 +300,8 @@ def resize_image(image_path, output_size=(1024, 576)):
     return cropped_image
 
 with gr.Blocks() as demo:
-  gr.Markdown('''# Stable Video Diffusion - Img2Vid - XT ([model](https://huggingface.co/stabilityai/stable-video-diffusion-img2vid-xt), [paper](https://stability.ai/research/stable-video-diffusion-scaling-latent-video-diffusion-models-to-large-datasets))
-#### Research release ([_non-commercial_](https://huggingface.co/stabilityai/stable-video-diffusion-img2vid-xt/blob/main/LICENSE)): generate `25 frames` of video from a single image at `6 fps`. Each generation takes ~60s on the A100. [Join the waitlist](https://stability.ai/contact) for our upcoming web experience.
+  gr.Markdown('''# Unofficial demo for Stable Video Diffusion - Img2Vid - XT ([model](https://huggingface.co/stabilityai/stable-video-diffusion-img2vid-xt), [paper](https://stability.ai/research/stable-video-diffusion-scaling-latent-video-diffusion-models-to-large-datasets))
+#### Research release ([_non-commercial_](https://huggingface.co/stabilityai/stable-video-diffusion-img2vid-xt/blob/main/LICENSE)): generate `25 frames` of video from a single image at `6 fps`. Each generation takes ~60s on the A100. [Join the waitlist](https://stability.ai/contact) for Stability's upcoming web experience.
   ''')
   with gr.Row():
     with gr.Column():
@@ -311,9 +311,11 @@ with gr.Blocks() as demo:
   with gr.Accordion("Advanced options", open=False):
       seed = gr.Slider(label="Seed", value=42, randomize=True, minimum=0, maximum=max_64_bit_int, step=1)
       randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
+      motion_bucket_id = gr.Slider(label="Motion bucket id", info="Controls how much motion to add/remove from the image", value=127, minimum=1, maximum=255)
+      fps_id = gr.Slider(label="Frames per second", info="The length of your video in seconds will be 25/fps", value=6, minimum=5, maximum=30)
       
   image.upload(fn=resize_image, inputs=image, outputs=image, queue=False)
-  generate_btn.click(fn=sample, inputs=[image, seed, randomize_seed], outputs=[video, seed], api_name="video")
+  generate_btn.click(fn=sample, inputs=[image, seed, randomize_seed, motion_bucket_id, fps_id], outputs=[video, seed], api_name="video")
   
 if __name__ == "__main__":
     demo.queue(max_size=20)

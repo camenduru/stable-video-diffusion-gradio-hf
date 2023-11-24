@@ -69,158 +69,130 @@ model, filter = load_model(
 )
 
 def sample(
-    input_path: str = "assets/test_image.png",  # Can either be image file or folder with image files
+    image: Image,
     seed: Optional[int] = None,
     randomize_seed: bool = True,
     motion_bucket_id: int = 127,
     fps_id: int = 6,
     version: str = "svd_xt",
     cond_aug: float = 0.02,
-    decoding_t: int = 7,  # Number of frames decoded at a time! This eats most VRAM. Reduce if necessary.
+    decoding_t: int = 5,  # Number of frames decoded at a time! This eats most VRAM. Reduce if necessary.
     device: str = "cuda",
     output_folder: str = "outputs",
     progress=gr.Progress(track_tqdm=True)
 ):
-    """
-    Simple script to generate a single sample conditioned on an image `input_path` or multiple images, one for each
-    image file in folder `input_path`. If you run out of VRAM, try decreasing `decoding_t`.
-    """
     if(randomize_seed):
         seed = random.randint(0, max_64_bit_int)
         
     torch.manual_seed(seed)
     
-    path = Path(input_path)
-    all_img_paths = []
-    if path.is_file():
-        if any([input_path.endswith(x) for x in ["jpg", "jpeg", "png"]]):
-            all_img_paths = [input_path]
-        else:
-            raise ValueError("Path is not valid image file.")
-    elif path.is_dir():
-        all_img_paths = sorted(
-            [
-                f
-                for f in path.iterdir()
-                if f.is_file() and f.suffix.lower() in [".jpg", ".jpeg", ".png"]
-            ]
+    if image.mode == "RGBA":
+        image = image.convert("RGB")
+    w, h = image.size
+
+    if h % 64 != 0 or w % 64 != 0:
+        width, height = map(lambda x: x - x % 64, (w, h))
+        image = image.resize((width, height))
+        print(
+            f"WARNING: Your image is of size {h}x{w} which is not divisible by 64. We are resizing to {height}x{width}!"
         )
-        if len(all_img_paths) == 0:
-            raise ValueError("Folder does not contain any images.")
-    else:
-        raise ValueError
 
-    for input_img_path in all_img_paths:
-        with Image.open(input_img_path) as image:
-            if image.mode == "RGBA":
-                image = image.convert("RGB")
-            w, h = image.size
+    image = ToTensor()(image)
+    image = image * 2.0 - 1.0
+    image = image.unsqueeze(0).to(device)
+    H, W = image.shape[2:]
+    assert image.shape[1] == 3
+    F = 8
+    C = 4
+    shape = (num_frames, C, H // F, W // F)
+    if (H, W) != (576, 1024):
+        print(
+            "WARNING: The conditioning frame you provided is not 576x1024. This leads to suboptimal performance as model was only trained on 576x1024. Consider increasing `cond_aug`."
+        )
+    if motion_bucket_id > 255:
+        print(
+            "WARNING: High motion bucket! This may lead to suboptimal performance."
+        )
 
-            if h % 64 != 0 or w % 64 != 0:
-                width, height = map(lambda x: x - x % 64, (w, h))
-                image = image.resize((width, height))
-                print(
-                    f"WARNING: Your image is of size {h}x{w} which is not divisible by 64. We are resizing to {height}x{width}!"
-                )
+    if fps_id < 5:
+        print("WARNING: Small fps value! This may lead to suboptimal performance.")
 
-            image = ToTensor()(image)
-            image = image * 2.0 - 1.0
+    if fps_id > 30:
+        print("WARNING: Large fps value! This may lead to suboptimal performance.")
 
-        image = image.unsqueeze(0).to(device)
-        H, W = image.shape[2:]
-        assert image.shape[1] == 3
-        F = 8
-        C = 4
-        shape = (num_frames, C, H // F, W // F)
-        if (H, W) != (576, 1024):
-            print(
-                "WARNING: The conditioning frame you provided is not 576x1024. This leads to suboptimal performance as model was only trained on 576x1024. Consider increasing `cond_aug`."
+    value_dict = {}
+    value_dict["motion_bucket_id"] = motion_bucket_id
+    value_dict["fps_id"] = fps_id
+    value_dict["cond_aug"] = cond_aug
+    value_dict["cond_frames_without_noise"] = image
+    value_dict["cond_frames"] = image + cond_aug * torch.randn_like(image)
+    value_dict["cond_aug"] = cond_aug
+
+    with torch.no_grad():
+        with torch.autocast(device):
+            batch, batch_uc = get_batch(
+                get_unique_embedder_keys_from_conditioner(model.conditioner),
+                value_dict,
+                [1, num_frames],
+                T=num_frames,
+                device=device,
             )
-        if motion_bucket_id > 255:
-            print(
-                "WARNING: High motion bucket! This may lead to suboptimal performance."
+            c, uc = model.conditioner.get_unconditional_conditioning(
+                batch,
+                batch_uc=batch_uc,
+                force_uc_zero_embeddings=[
+                    "cond_frames",
+                    "cond_frames_without_noise",
+                ],
             )
 
-        if fps_id < 5:
-            print("WARNING: Small fps value! This may lead to suboptimal performance.")
+            for k in ["crossattn", "concat"]:
+                uc[k] = repeat(uc[k], "b ... -> b t ...", t=num_frames)
+                uc[k] = rearrange(uc[k], "b t ... -> (b t) ...", t=num_frames)
+                c[k] = repeat(c[k], "b ... -> b t ...", t=num_frames)
+                c[k] = rearrange(c[k], "b t ... -> (b t) ...", t=num_frames)
 
-        if fps_id > 30:
-            print("WARNING: Large fps value! This may lead to suboptimal performance.")
+            randn = torch.randn(shape, device=device)
 
-        value_dict = {}
-        value_dict["motion_bucket_id"] = motion_bucket_id
-        value_dict["fps_id"] = fps_id
-        value_dict["cond_aug"] = cond_aug
-        value_dict["cond_frames_without_noise"] = image
-        value_dict["cond_frames"] = image + cond_aug * torch.randn_like(image)
-        value_dict["cond_aug"] = cond_aug
+            additional_model_inputs = {}
+            additional_model_inputs["image_only_indicator"] = torch.zeros(
+                2, num_frames
+            ).to(device)
+            additional_model_inputs["num_video_frames"] = batch["num_video_frames"]
 
-        with torch.no_grad():
-            with torch.autocast(device):
-                batch, batch_uc = get_batch(
-                    get_unique_embedder_keys_from_conditioner(model.conditioner),
-                    value_dict,
-                    [1, num_frames],
-                    T=num_frames,
-                    device=device,
-                )
-                c, uc = model.conditioner.get_unconditional_conditioning(
-                    batch,
-                    batch_uc=batch_uc,
-                    force_uc_zero_embeddings=[
-                        "cond_frames",
-                        "cond_frames_without_noise",
-                    ],
+            def denoiser(input, sigma, c):
+                return model.denoiser(
+                    model.model, input, sigma, c, **additional_model_inputs
                 )
 
-                for k in ["crossattn", "concat"]:
-                    uc[k] = repeat(uc[k], "b ... -> b t ...", t=num_frames)
-                    uc[k] = rearrange(uc[k], "b t ... -> (b t) ...", t=num_frames)
-                    c[k] = repeat(c[k], "b ... -> b t ...", t=num_frames)
-                    c[k] = rearrange(c[k], "b t ... -> (b t) ...", t=num_frames)
+            samples_z = model.sampler(denoiser, randn, cond=c, uc=uc)
+            model.en_and_decode_n_samples_a_time = decoding_t
+            samples_x = model.decode_first_stage(samples_z)
+            samples = torch.clamp((samples_x + 1.0) / 2.0, min=0.0, max=1.0)
 
-                randn = torch.randn(shape, device=device)
+            os.makedirs(output_folder, exist_ok=True)
+            base_count = len(glob(os.path.join(output_folder, "*.mp4")))
+            video_path = os.path.join(output_folder, f"{base_count:06d}.mp4")
+            writer = cv2.VideoWriter(
+                video_path,
+                cv2.VideoWriter_fourcc(*"mp4v"),
+                fps_id + 1,
+                (samples.shape[-1], samples.shape[-2]),
+            )
 
-                additional_model_inputs = {}
-                additional_model_inputs["image_only_indicator"] = torch.zeros(
-                    2, num_frames
-                ).to(device)
-                additional_model_inputs["num_video_frames"] = batch["num_video_frames"]
-
-                def denoiser(input, sigma, c):
-                    return model.denoiser(
-                        model.model, input, sigma, c, **additional_model_inputs
-                    )
-
-                samples_z = model.sampler(denoiser, randn, cond=c, uc=uc)
-                model.en_and_decode_n_samples_a_time = decoding_t
-                samples_x = model.decode_first_stage(samples_z)
-                samples = torch.clamp((samples_x + 1.0) / 2.0, min=0.0, max=1.0)
-
-                os.makedirs(output_folder, exist_ok=True)
-                base_count = len(glob(os.path.join(output_folder, "*.mp4")))
-                video_path = os.path.join(output_folder, f"{base_count:06d}.mp4")
-                writer = cv2.VideoWriter(
-                    video_path,
-                    cv2.VideoWriter_fourcc(*"mp4v"),
-                    fps_id + 1,
-                    (samples.shape[-1], samples.shape[-2]),
-                )
-
-                samples = embed_watermark(samples)
-                samples = filter(samples)
-                vid = (
-                    (rearrange(samples, "t c h w -> t h w c") * 255)
-                    .cpu()
-                    .numpy()
-                    .astype(np.uint8)
-                )
-                for frame in vid:
-                    frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-                    writer.write(frame)
-                writer.release()
-        
-        return video_path, seed
+            samples = embed_watermark(samples)
+            samples = filter(samples)
+            vid = (
+                (rearrange(samples, "t c h w -> t h w c") * 255)
+                .cpu()
+                .numpy()
+                .astype(np.uint8)
+            )
+            for frame in vid:
+                frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+                writer.write(frame)
+            writer.release()
+    return video_path, seed
 
 def get_unique_embedder_keys_from_conditioner(conditioner):
     return list(set([x.input_key for x in conditioner.embedders]))
@@ -266,8 +238,7 @@ def get_batch(keys, value_dict, N, T, device):
             batch_uc[key] = torch.clone(batch[key])
     return batch, batch_uc
 
-def resize_image(image_path, output_size=(1024, 576)):
-    image = Image.open(image_path)
+def resize_image(image, output_size=(1024, 576)):
     # Calculate aspect ratios
     target_aspect = output_size[0] / output_size[1]  # Aspect ratio of the desired size
     image_aspect = image.width / image.height  # Aspect ratio of the original image
@@ -296,7 +267,6 @@ def resize_image(image_path, output_size=(1024, 576)):
 
     # Crop the image
     cropped_image = resized_image.crop((left, top, right, bottom))
-
     return cropped_image
 
 with gr.Blocks() as demo:
@@ -305,7 +275,7 @@ with gr.Blocks() as demo:
   ''')
   with gr.Row():
     with gr.Column():
-        image = gr.Image(label="Upload your image", type="filepath")
+        image = gr.Image(label="Upload your image", type="pil")
         generate_btn = gr.Button("Generate")
     video = gr.Video()
   with gr.Accordion("Advanced options", open=False):

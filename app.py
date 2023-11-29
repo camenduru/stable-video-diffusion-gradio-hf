@@ -1,5 +1,5 @@
 import gradio as gr
-import gradio.helpers
+#import gradio.helpers
 import torch
 import os
 from glob import glob
@@ -14,7 +14,7 @@ import uuid
 import random
 from huggingface_hub import hf_hub_download
 
-gradio.helpers.CACHED_FOLDER = '/data/cache'
+#gradio.helpers.CACHED_FOLDER = '/data/cache'
 
 pipe = StableVideoDiffusionPipeline.from_pretrained(
     "stabilityai/stable-video-diffusion-img2vid-xt", torch_dtype=torch.float16, variant="fp16"
@@ -87,7 +87,7 @@ def resize_image(image, output_size=(1024, 576)):
 
 with gr.Blocks() as demo:
   gr.Markdown('''# Community demo for Stable Video Diffusion - Img2Vid - XT ([model](https://huggingface.co/stabilityai/stable-video-diffusion-img2vid-xt), [paper](https://stability.ai/research/stable-video-diffusion-scaling-latent-video-diffusion-models-to-large-datasets))
-#### Research release ([_non-commercial_](https://huggingface.co/stabilityai/stable-video-diffusion-img2vid-xt/blob/main/LICENSE)): generate `4s` vid from a single image at (`25 frames` at `6 fps`). Generation takes ~60s in an A100. [Join the waitlist for Stability's upcoming web experience](https://stability.ai/contact).
+#### Research release ([_non-commercial_](https://huggingface.co/stabilityai/stable-video-diffusion-img2vid-xt/blob/main/LICENSE)): generate `4s` vid from a single image at (`25 frames` at `6 fps`). this demo uses 🧨 diffusers. [Join the waitlist for Stability's upcoming web experience](https://stability.ai/contact).
   ''')
   with gr.Row():
     with gr.Column():
@@ -106,7 +106,6 @@ with gr.Blocks() as demo:
     examples=[
         "images/blink_meme.png",
         "images/confused2_meme.png",
-        "images/confused_meme.png",
         "images/disaster_meme.png",
         "images/distracted_meme.png",
         "images/hide_meme.png",

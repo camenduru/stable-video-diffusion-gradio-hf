@@ -48,7 +48,7 @@ def sample(
     base_count = len(glob(os.path.join(output_folder, "*.mp4")))
     video_path = os.path.join(output_folder, f"{base_count:06d}.mp4")
 
-    frames = pipe(image, decode_chunk_size=decoding_t, generator=generator, motion_bucket_id=motion_bucket_id, noise_aug_strength=0.1).frames[0]
+    frames = pipe(image, decode_chunk_size=decoding_t, generator=generator, motion_bucket_id=motion_bucket_id, noise_aug_strength=0.1, num_frames=25).frames[0]
     export_to_video(frames, video_path, fps=fps_id)
     torch.manual_seed(seed)
     

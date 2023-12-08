@@ -1,5 +1,5 @@
 https://gradio-builds.s3.amazonaws.com/756e3431d65172df986a7e335dce8136206a293a/gradio-4.7.1-py3-none-any.whl
-git+https://github.com/huggingface/diffusers.git@refs/pull/5895/head
+diffusers
 transformers
 accelerate
 safetensors

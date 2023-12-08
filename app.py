@@ -21,7 +21,7 @@ pipe = StableVideoDiffusionPipeline.from_pretrained(
 )
 pipe.to("cuda")
 pipe.unet = torch.compile(pipe.unet, mode="reduce-overhead", fullgraph=True)
-pipe.vae = torch.compile(pipe.vae, mode="reduce-overhead", fullgraph=True)
+#pipe.vae = torch.compile(pipe.vae, mode="reduce-overhead", fullgraph=True)
 
 max_64_bit_int = 2**63 - 1
 
